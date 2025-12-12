@@ -1,5 +1,7 @@
 // src/components/Sidebar.js
 import React from "react";
+import logo from "../assets/logo2.png";
+
 
 const NavItem = ({ icon, label, active }) => (
   <div
@@ -15,16 +17,24 @@ const NavItem = ({ icon, label, active }) => (
 
 export default function Sidebar() {
   return (
-    <aside className="w-72 bg-[#0f1724] text-gray-200 min-h-screen sticky top-0">
+    <aside className="w-72 bg-[#142D4C] text-gray-200 min-h-screen sticky top-0">
       <div className="px-6 py-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-black font-bold">FG</div>
+          <div className="w-8 h-8">
+            <div className="w-10 h-10">
+              <img
+                src={logo}
+                alt="App Logo"
+                className="w-full h-full object-contain rounded-md"
+              />
+            </div>
+
+          </div>
           <div>
-            <div className="text-lg font-semibold">ChronoShelf</div>
+            <div className="text-lg font-semibold span">ChronoShelf</div>
             <div className="text-xs text-gray-400">Inventory</div>
           </div>
         </div>
-
         <nav className="space-y-2">
           <NavItem icon="🏠" label="Overview" active />
           <NavItem icon="📦" label="Items" />

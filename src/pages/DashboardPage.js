@@ -19,7 +19,7 @@ export default function DashboardPage({ onShowScanner }) {
 
 
   return (
-    <div className="flex bg-slate-50 min-h-screen">
+    <div className="flex bg-[#DFFFD8]/40 min-h-screen">
       {/* Sidebar */}
       <Sidebar />
 
