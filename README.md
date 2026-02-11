@@ -84,6 +84,16 @@ PORT=5000
 REACT_APP_API_URL=http://localhost:5000
 
 
+🚀 Quick Start (5 Minutes)
+
+1. Clone repo & cd into it
+2. Copy .env.example to backend/.env and frontend/.env
+3. Add your MongoDB URI & JWT secret
+4. Run: cd backend && npm install && npm run dev
+5. In another terminal: cd frontend && npm install && npm start
+6. Open http://localhost:3000
+
+
 
 ⚠️ Important
 
