@@ -1,70 +1,139 @@
-# Getting Started with Create React App
+🥗 SmartExpiryProject
+Reduce food waste. Save money. Cook smarter.
+SmartExpiryProject helps users track grocery expiry dates, understand weekly savings/loss, and get cooking suggestions based on available items.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+✨ Features
 
-## Available Scripts
+🔐 Authentication
+Signup / Login using JWT
+Secure password handling
 
-In the project directory, you can run:
+📦 Item Management
+Add food items with expiry dates
+View & delete items
+Items are user-specific
 
-### `npm start`
+⏰ Expiry Tracking
+Highlights expired & near-expiry items
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+📊 Dashboard
+Personalized summary per user
+Weekly savings & loss calculation
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+🍳 Cooking Suggestions
+Uses TheMealDB API
+Suggests recipes based on stored items
 
-### `npm test`
+👤 Profile
+Change password
+Secure account handling
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+🧠 Tech Stack
+Layer	Technology
+🎨 Frontend	React
+⚙️ Backend	Node.js, Express
+🗄 Database	MongoDB
+🔐 Auth	JWT
+🍽 Recipe API	TheMealDB
 
-### `npm run build`
+📁 Folder Structure
+SmartExpiryProject/
+├── frontend/      # React UI, components, pages
+└── backend/       # Express server, APIs, DB logic
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+✅ Prerequisites
+Make sure you have:
+Node.js ≥ 18.x
+npm
+MongoDB Atlas or local MongoDB
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+🔐 Environment Variables
+📌 Backend (backend/.env)
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+PORT=5000
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+📌 Frontend (frontend/.env)
+REACT_APP_API_URL=http://localhost:5000
 
-### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+⚠️ Important
+Never commit real secrets
+Always add .env to .gitignore
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+📦 Installation
+Backend
+cd backend
+npm install
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Frontend
+cd ../frontend
+npm install
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+▶️ Run Locally
+Terminal 1 – Backend
+cd backend
+npm run dev
 
-## Learn More
+Terminal 2 – Frontend
+cd frontend
+npm start
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+App runs at:
+👉 http://localhost:3000
 
-### Code Splitting
+🔗 API Endpoints (Quick View)
+🔐 Auth
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+POST /api/auth/signup
+POST /api/auth/login
+PUT /api/auth/change-password
 
-### Analyzing the Bundle Size
+📦 Items
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+GET /api/items
+POST /api/items
+DELETE /api/items/:id
 
-### Making a Progressive Web App
+📊 Dashboard
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+GET /api/dashboard/summary
 
-### Advanced Configuration
+🧩 Key Behavior Notes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+🔒 All items are linked to userId
+📊 Dashboard data is personalized
+💰 Weekly savings/loss is calculated from expiry logic
+🍽 Cooking suggestions use TheMealDB API
+🛠 Common Troubleshooting
 
-### Deployment
+❌ Login failed
+Check JWT_SECRET in backend/.env
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+🌐 CORS / Network error
+Make sure backend is running on port 5000
+Check frontend API URL
 
-### `npm run build` fails to minify
+🔄 Changes not reflecting
+Restart backend/frontend after editing .env
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+🔐 Security Notes
+Rotate secrets if leaked
+Never push .env or node_modules
+Use HTTPS in production
+
+🚀 Roadmap / Future Improvements
+
+🔁 Backend proxy for recipe APIs
+📈 Advanced analytics & reports
+🔔 Expiry notifications (email / push)
+📱 Mobile-friendly UI
+
+💡 Why This Project?
+
+SmartExpiryProject is built to:
+
+Reduce food waste 🌍
+Help students & families save money 💰
+Encourage smarter cooking 🍳
