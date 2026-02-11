@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================
+   GLOBAL FADE ANIMATION
+========================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   AUTH PAGE BACKGROUND
+========================= */
+.auth-bg {
+  min-height: 100vh;
+  background: linear-gradient(
+    120deg,
+    #fdfcfb,
+    #e2ebf0,
+    #e0c3fc
+  );
+  background-size: 400% 400%;
+  animation: gradientFlow 12s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* =========================
+   AUTH INPUTS
+========================= */
+.auth-input {
+  @apply w-full px-4 py-3 rounded-lg
+         bg-white/80 border border-gray-200
+         focus:outline-none focus:ring-2
+         focus:ring-[#6BCF9D];
+}
+
+/* =========================
+   SOCIAL BUTTONS
+========================= */
+.social-btn {
+  @apply flex-1 py-2 rounded-lg
+         border border-gray-200
+         bg-white/70 hover:shadow-md
+         transition active:scale-95;
+}
+
+/* =========================
+   PAGE TRANSITIONS
+========================= */
+.page-enter {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 300ms ease;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: all 300ms ease;
+}
+/* FLOATING BLOBS */
+.blob {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.6;
+  animation: float 18s ease-in-out infinite;
+}
+
+.blob-1 {
+  background: #c3f0e5;
+  top: -120px;
+  left: -120px;
+}
+
+.blob-2 {
+  background: #e0c3fc;
+  bottom: -140px;
+  right: -140px;
+  animation-delay: 6s;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(60px, -40px); }
+  100% { transform: translate(0, 0); }
+}
