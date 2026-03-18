@@ -1,90 +1,89 @@
-🥗 SmartExpiryProject
+# 🥗 SmartExpiryProject
 
 Reduce food waste. Save money. Cook smarter.
 
 SmartExpiryProject helps users track grocery expiry dates, understand weekly savings/loss, and get cooking suggestions based on available items.
 
+---
 
+## ✨ Features
 
-✨ Features
+### 🔐 Authentication
 
-🔐 Authentication
+- Signup / Login using JWT
+- Secure password handling
 
-Signup / Login using JWT
+### 📦 Item Management
 
-Secure password handling
+- Add food items with expiry dates
+- View & delete items
+- Items are user-specific
 
+### ⏰ Expiry Tracking
 
-📦 Item Management
+- Highlights expired & near-expiry items
 
-Add food items with expiry dates
+### 📊 Dashboard
 
-View & delete items
+- Personalized summary per user
+- Weekly savings & loss calculation
 
-Items are user-specific
+### 🍳 Cooking Suggestions
 
+- Uses TheMealDB API
+- Suggests recipes based on stored items
 
-⏰ Expiry Tracking
+---
 
-Highlights expired & near-expiry items
+## 🧠 Tech Stack
+```bash
+- Frontend-React
+- Backend-Node.js, Express
+- Database-MongoDB
+- Auth-JWT
+- Recipe API-TheMealDB
+```
+---
 
+## 📁 Folder Structure
+```bash
 
-📊 Dashboard
-
-Personalized summary per user
-
-Weekly savings & loss calculation
-
-
-🍳 Cooking Suggestions
-
-Uses TheMealDB API
-
-Suggests recipes based on stored items
-
-
-👤 Profile
-
-Change password
-
-Secure account handling
-
-
-🧠 Tech Stack
-Layer	Technology
-🎨 Frontend	React
-⚙️ Backend	Node.js, Express
-🗄 Database	MongoDB
-🔐 Auth	JWT
-🍽 Recipe API	TheMealDB
-📁 Folder Structure
 SmartExpiryProject/
 ├── frontend/      # React UI, components, pages
 └── backend/       # Express server, APIs, DB logic
+```
 
+---
 
-✅ Prerequisites
+## ✅ Prerequisites
 
-Make sure you have:
+*Make sure you have:*
 
-Node.js ≥ 18.x
+- Node.js ≥ 18.x
+- npm
+- MongoDB Atlas and local MongoDB(optional)
 
-npm
+---
 
-MongoDB Atlas or local MongoDB
+## 🔐 Environment Variables
 
+### 📌 Backend (backend/.env)
+```bash
 
-🔐 Environment Variables
-📌 Backend (backend/.env)
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
 PORT=5000
+```
 
-📌 Frontend (frontend/.env)
+### 📌 Frontend (frontend/.env)
+```bash
+
 REACT_APP_API_URL=http://localhost:5000
+```
 
+---
 
-🚀 Quick Start (5 Minutes)
+## 🚀 Quick Start (5 Minutes)
 
 1. Clone repo & cd into it
 2. Copy .env.example to backend/.env and frontend/.env
@@ -93,117 +92,34 @@ REACT_APP_API_URL=http://localhost:5000
 5. In another terminal: cd frontend && npm install && npm start
 6. Open http://localhost:3000
 
+---
 
+## 📦 Installation
 
-⚠️ Important
-
-Never commit real secrets
-
-Always add .env to .gitignore
-
-
-📦 Installation
-Backend
+### Backend
+```bash
 cd backend
 npm install
+```
 
-Frontend
+### Frontend
+```bash
 cd ../frontend
 npm install
+```
 
-▶️ Run Locally
-Terminal 1 – Backend
+### ▶️ Run Locally
+```bash
+
+*Terminal 1 – Backend*
 cd backend
 npm run dev
 
-Terminal 2 – Frontend
+*Terminal 2 – Frontend*
 cd frontend
 npm start
 
 
-App runs at:
+*App runs at:*
 👉 http://localhost:3000
-
-🔗 API Endpoints (Quick View)
-
-🔐 Auth
-
-POST /api/auth/signup
-
-POST /api/auth/login
-
-PUT /api/auth/change-password
-
-
-📦 Items
-
-GET /api/items
-
-POST /api/items
-
-DELETE /api/items/:id
-
-
-📊 Dashboard
-
-GET /api/dashboard/summary
-
-🧩 Key Behavior Notes
-
-🔒 All items are linked to userId
-
-📊 Dashboard data is personalized
-
-💰 Weekly savings/loss is calculated from expiry logic
-
-🍽 Cooking suggestions use TheMealDB API
-
-🛠 Common Troubleshooting
-
-
-❌ Login failed
-
-Check JWT_SECRET in backend/.env
-
-
-🌐 CORS / Network error
-
-Make sure backend is running on port 5000
-
-Check frontend API URL
-
-
-🔄 Changes not reflecting
-
-Restart backend/frontend after editing .env
-
-
-🔐 Security Notes
-
-Rotate secrets if leaked
-
-Never push .env or node_modules
-
-Use HTTPS in production
-
-
-🚀 Roadmap / Future Improvements
-
-🔁 Backend proxy for recipe APIs
-
-📈 Advanced analytics & reports
-
-🔔 Expiry notifications (email / push)
-
-📱 Mobile-friendly UI
-
-
-💡 Why This Project?
-
-SmartExpiryProject is built to:
-
-Reduce food waste 🌍
-
-Help students & families save money 💰
-
-Encourage smarter cooking 🍳
+```
