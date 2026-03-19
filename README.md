@@ -123,3 +123,31 @@ npm start
 *App runs at:*
 👉 http://localhost:3000
 ```
+
+---
+
+## 👩‍💻 Author
+
+## Anisa Barvin
+
+📧 Email: barvinanisa@gmail.com
+
+🔗 GitHub: https://github.com/Anisa-barvin
+
+## Anika V
+
+📧 Email: anikavadivel@gmail.com
+
+🔗 GitHub: https://github.com/Anika02023
+
+## Archana gurusamy
+
+📧 Email: archanagurusamy648@gmail.com
+
+🔗 GitHub: https://github.com/ARCHANA-SENGUNTHAR
+
+## Hemalatha P N
+
+📧 Email: hemalathanatarajan28@gmail.com
+
+🔗 GitHub: https://github.com/hemalatha2005
