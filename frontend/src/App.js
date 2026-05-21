@@ -25,6 +25,7 @@ export default function App() {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     const syncPageWithHash = () => {
@@ -76,6 +77,56 @@ export default function App() {
     localStorage.removeItem("isAuthenticated");
     setUser(null);
     navigateToPage("auth", { replace: true });
+  };
+
+  const handleScannerSave = async (scanPayload) => {
+    const token = localStorage.getItem("token") || "";
+    const productName = (scanPayload?.productName || "").trim();
+    const barcode = (scanPayload?.barcode || "").trim();
+    const expiryDate = scanPayload?.expiry || null;
+    const productDetails = scanPayload?.productDetails || {};
+
+    if (!expiryDate) {
+      throw new Error("Expiry date not detected yet");
+    }
+
+    const name = productName || (barcode ? `Barcode ${barcode}` : "Unknown Product");
+
+    const res = await fetch(`${apiBase}/api/items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name,
+        category: "Scanned",
+        quantity: 1,
+        expiryDate,
+        pricePerUnit: 0,
+        barcode: barcode || null,
+        brand: productDetails.brand || null,
+        ingredients: productDetails.ingredients || null,
+        allergens: Array.isArray(productDetails.allergens)
+          ? productDetails.allergens
+          : [],
+        additives: Array.isArray(productDetails.additives)
+          ? productDetails.additives
+          : Array.isArray(productDetails.possibleChemicals)
+          ? productDetails.possibleChemicals
+          : [],
+        nutritionGrade: productDetails.nutritionGrade || null,
+        novaGroup: productDetails.novaGroup || null,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data?._id) {
+      throw new Error(data?.message || "Failed to add scanned item");
+    }
+
+    navigateToPage("items");
+    return data;
   };
 
   return (
@@ -131,7 +182,7 @@ export default function App() {
 
           {/* SCANNER */}
           {page === "scanner" && (
-            <ScannerPage onBack={() => navigateToPage("dashboard")} />
+            <ScannerPage onBack={() => navigateToPage("dashboard")} onSave={handleScannerSave} />
           )}
 
           {/* COOKING */}
@@ -159,3 +210,4 @@ export default function App() {
     </div>
   );
 }
+

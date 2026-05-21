@@ -7,7 +7,20 @@ const router = express.Router();
 // ➕ ADD ITEM
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { name, category, quantity, expiryDate, pricePerUnit } = req.body;
+    const {
+      name,
+      category,
+      quantity,
+      expiryDate,
+      pricePerUnit,
+      barcode,
+      brand,
+      ingredients,
+      allergens,
+      additives,
+      nutritionGrade,
+      novaGroup,
+    } = req.body;
     const parsedPrice = Number(pricePerUnit);
 
     if (!name || !expiryDate || Number.isNaN(parsedPrice) || parsedPrice < 0) {
@@ -20,6 +33,13 @@ router.post("/", authMiddleware, async (req, res) => {
       quantity: Number(quantity) || 1,
       expiryDate,
       pricePerUnit: parsedPrice,
+      barcode: barcode || null,
+      brand: brand || null,
+      ingredients: ingredients || null,
+      allergens: Array.isArray(allergens) ? allergens : [],
+      additives: Array.isArray(additives) ? additives : [],
+      nutritionGrade: nutritionGrade || null,
+      novaGroup: novaGroup || null,
       userId: req.userId,
     });
 

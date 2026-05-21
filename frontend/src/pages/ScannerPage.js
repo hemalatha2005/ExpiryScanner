@@ -67,13 +67,59 @@ export default function ScannerPage({ onBack, onSave }) {
     const [workerReady, setWorkerReady] = useState(false);
     const [barcode, setBarcode] = useState(null);
     const [productName, setProductName] = useState("");
+    const [productDetails, setProductDetails] = useState(null);
+    const [lookupLoading, setLookupLoading] = useState(false);
+    const [lookupError, setLookupError] = useState("");
     const [ocrText, setOcrText] = useState("");
     const [expiry, setExpiry] = useState("");
     const [ocrBusy, setOcrBusy] = useState(false);
+    const [saveBusy, setSaveBusy] = useState(false);
+    const [saveStatus, setSaveStatus] = useState("");
     const [autoStopped, setAutoStopped] = useState(false); // stops auto OCR after expiry found (can still manual capture)
     const lastOcrAt = useRef(0);
+    const lastBarcodeScanAt = useRef(0);
+    const barcodeScanBusyRef = useRef(false);
+    const lastAutoSavedKeyRef = useRef("");
+    const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    const token = localStorage.getItem("token") || "";
 
     const OCR_INTERVAL = 1200; // throttle for auto OCR (ms)
+    const BARCODE_SCAN_INTERVAL = 350; // throttle for fallback frame decode (ms)
+    const hasProductDetails = Boolean(productDetails?.found);
+
+    const displayList = (items) => {
+        if (!Array.isArray(items) || items.length === 0) return "Not listed";
+        return items.join(", ");
+    };
+
+    const resetScanDetails = () => {
+        setBarcode(null);
+        setOcrText("");
+        setExpiry("");
+        setProductName("");
+        setProductDetails(null);
+        setLookupError("");
+        setSaveStatus("");
+        lastAutoSavedKeyRef.current = "";
+        setAutoStopped(false);
+    };
+
+    const applyManualBarcode = (value) => {
+        const nextCode = value.replace(/\D/g, "").slice(0, 14);
+        setBarcode((prev) => {
+            if (prev !== nextCode) {
+                setProductName("");
+                setProductDetails(null);
+                setLookupError("");
+                setSaveStatus("");
+                lastAutoSavedKeyRef.current = "";
+                if (nextCode && expiry) {
+                    lastAutoSavedKeyRef.current = `${nextCode}:${expiry}`;
+                }
+            }
+            return nextCode || null;
+        });
+    };
 
     // ---------- helper: parse expiry ----------
     function parseExpiryFromText(txt) {
@@ -148,6 +194,67 @@ export default function ScannerPage({ onBack, onSave }) {
         let active = true;
         let localStream = null;
         let barcodeDetector = null;
+        let nativeDetectorFailed = false;
+
+        const setDetectedBarcode = (nextCode) => {
+            if (!nextCode) return;
+            setBarcode((prev) => {
+                if (prev !== nextCode) {
+                    setOcrText("");
+                    setExpiry("");
+                    setProductName("");
+                    setProductDetails(null);
+                    setLookupError("");
+                    setSaveStatus("");
+                    lastAutoSavedKeyRef.current = "";
+                    setAutoStopped(false); // resume auto OCR on new item
+                }
+                return nextCode;
+            });
+        };
+
+        const detectWithQuaggaFromFrame = async () => {
+            if (!videoRef.current || !videoRef.current.videoWidth || !videoRef.current.videoHeight) return;
+            if (barcodeScanBusyRef.current) return;
+
+            const now = Date.now();
+            if (now - lastBarcodeScanAt.current < BARCODE_SCAN_INTERVAL) return;
+            lastBarcodeScanAt.current = now;
+            barcodeScanBusyRef.current = true;
+            try {
+                const canvas = document.createElement("canvas");
+                const width = videoRef.current.videoWidth;
+                const height = videoRef.current.videoHeight;
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return;
+                ctx.drawImage(videoRef.current, 0, 0, width, height);
+
+                await new Promise((resolve) => {
+                    Quagga.decodeSingle(
+                        {
+                            src: canvas.toDataURL("image/jpeg", 0.8),
+                            numOfWorkers: 0,
+                            inputStream: { size: 800 },
+                            locator: { patchSize: "medium", halfSample: true },
+                            decoder: {
+                                readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader", "upc_e_reader"],
+                            },
+                        },
+                        (result) => {
+                            const code = result?.codeResult?.code;
+                            if (code) {
+                                setDetectedBarcode(code);
+                            }
+                            resolve();
+                        }
+                    );
+                });
+            } finally {
+                barcodeScanBusyRef.current = false;
+            }
+        };
 
         const startCameraAndDetectors = async () => {
             try {    
@@ -174,89 +281,44 @@ export default function ScannerPage({ onBack, onSave }) {
                         const detectLoop = async () => {
                             if (!active) return;
                             try {
+                                if (nativeDetectorFailed) {
+                                    await detectWithQuaggaFromFrame();
+                                    requestAnimationFrame(detectLoop);
+                                    return;
+                                }
+
                                 const results = await barcodeDetector.detect(videoRef.current);
                                 if (results && results.length) {
                                     const bc = results[0].rawValue;
-                                    setBarcode((prev) => {
-                                        if (prev !== bc) {
-                                            setOcrText("");
-                                            setExpiry("");
-                                            setProductName("");
-                                            setAutoStopped(false); // resume auto OCR on new item
-                                        }
-                                        return bc;
-                                    });
+                                    setDetectedBarcode(bc);
                                 }
                             } catch (err) {
-                                // fallback if detection throws
-                                // console.warn("BarcodeDetector error:", err);
-                                if (active) initQuaggaLive();
+                                nativeDetectorFailed = true;
+                                await detectWithQuaggaFromFrame();
                             }
                             requestAnimationFrame(detectLoop);
                         };
                         detectLoop();
                     } catch (err) {
-                        // if BarcodeDetector constructor fails, use Quagga
-                        initQuaggaLive();
+                        nativeDetectorFailed = true;
+                        const fallbackLoop = async () => {
+                            if (!active) return;
+                            await detectWithQuaggaFromFrame();
+                            requestAnimationFrame(fallbackLoop);
+                        };
+                        fallbackLoop();
                     }
                 } else {
-                    initQuaggaLive();
+                    const fallbackLoop = async () => {
+                        if (!active) return;
+                        await detectWithQuaggaFromFrame();
+                        requestAnimationFrame(fallbackLoop);
+                    };
+                    fallbackLoop();
                 }
             } catch (err) {
                 console.error("getUserMedia error", err);
                 alert("Camera permission denied or not available. Allow camera access and retry.");
-            }
-        };
-
-        const initQuaggaLive = () => {
-            try {
-                Quagga.stop();
-            } catch (e) { }
-            try {
-                Quagga.init(
-                    {
-                        inputStream: {
-                            name: "Live",
-                            type: "LiveStream",
-                            target: videoRef.current, // attach to video element container
-                            constraints: {
-                                facingMode: "environment",
-                                width: 1280,
-                                height: 720,
-                            },
-                        },
-                        locator: { patchSize: "medium", halfSample: true },
-                        decoder: {
-                            readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader", "upc_e_reader"],
-                        },
-                        locate: true,
-                    },
-                    (err) => {
-                        if (err) {
-                            console.error("Quagga init error", err);
-                            return;
-                        }
-                        Quagga.start();
-                        Quagga.onDetected((res) => {
-                            try {
-                                const code = res?.codeResult?.code;
-                                if (code) {
-                                    setBarcode((prev) => {
-                                        if (prev !== code) {
-                                            setOcrText("");
-                                            setExpiry("");
-                                            setProductName("");
-                                            setAutoStopped(false); // resume auto OCR on new item
-                                        }
-                                        return code;
-                                    });
-                                }
-                            } catch (e) { }
-                        });
-                    }
-                );
-            } catch (e) {
-                console.error("Quagga error", e);
             }
         };
 
@@ -339,81 +401,55 @@ export default function ScannerPage({ onBack, onSave }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [streamActive, workerReady, autoStopped]);
 
-    // ---------- product lookup mock (replace with backend later) ----------
+    // ---------- product lookup (OpenFoodFacts via backend) ----------
     useEffect(() => {
         let mounted = true;
-        const lookupMock = async (code) => {
-            const mockDB = {
-                "8906001234567": { name: "Amul Milk 1L", price: "₹52", img: "" },
-                "123456789012": { name: "Sample Item", price: "₹120", img: "" },
-            };
-            return mockDB[code] || null;
-        };
+        const controller = new AbortController();
 
         (async () => {
-            if (!barcode) return;
-            await new Promise((r) => setTimeout(r, 200));
-            if (!mounted) return;
+            if (!barcode) {
+                setProductName("");
+                setProductDetails(null);
+                setLookupError("");
+                return;
+            }
+
+            setLookupLoading(true);
+            setLookupError("");
+
             try {
-                const info = await lookupMock(barcode);
-                if (info) {
-                    setProductName(info.name || "");
+                const res = await fetch(`${apiBase}/api/barcode/${encodeURIComponent(barcode)}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    signal: controller.signal,
+                });
+                const data = await res.json();
+                if (!mounted) return;
+
+                if (res.ok && data?.name) {
+                    setProductName(data.name);
+                    setProductDetails(data);
                 } else {
-                    setProductName(`Barcode: ${barcode}`);
+                    setProductName(`Unknown Item (${barcode})`);
+                    setProductDetails(null);
+                    setLookupError("No product found for this barcode.");
                 }
             } catch (e) {
-                setProductName(`Barcode: ${barcode}`);
+                if (!mounted || e?.name === "AbortError") return;
+                setProductName(`Unknown Item (${barcode})`);
+                setProductDetails(null);
+                setLookupError("Lookup failed. Check API/network.");
+            } finally {
+                if (mounted) setLookupLoading(false);
             }
         })();
 
-        return () => { mounted = false; };
-    }, [barcode]);
+        return () => {
+            mounted = false;
+            controller.abort();
+        };
+    }, [apiBase, barcode, token]);
 
-    // ---------- manual capture handler ----------
-    const handleCapture = async () => {
-        const video = videoRef.current;
-        const canvas = capturedCanvasRef.current;
-        if (!video || !canvas || !workerRef.current) return;
-
-        try {
-            const ctx = canvas.getContext("2d");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // optional preprocessing on capture (same simple approach)
-            try {
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const d = imgData.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-                    const boosted = avg > 140 ? 255 : avg < 60 ? 20 : avg * 1.05;
-                    d[i] = d[i + 1] = d[i + 2] = boosted;
-                }
-                ctx.putImageData(imgData, 0, 0);
-            } catch (e) {
-                // ignore preprocessing errors
-            }
-
-            setOcrBusy(true);
-            const { data } = await workerRef.current.recognize(canvas);
-            const text = (data && data.text) ? data.text.replace(/\n/g, " ").trim() : "";
-            setOcrText(text);
-            const parsed = parseExpiryFromText(text);
-            if (parsed) {
-                setExpiry(parsed);
-                setAutoStopped(true); // stop auto scanning because we found expiry
-            } else {
-                // keep auto scanning enabled so user can try moving packet; do not force stop
-                setExpiry("");
-            }
-        } catch (err) {
-            console.error("Manual capture OCR error", err);
-        } finally {
-            setOcrBusy(false);
-        }
-    };
-    // ⬇️ INSERT THIS BELOW handleSave()
+    // ---------- capture handler ----------
     const captureAndOcr = async () => {
         const video = videoRef.current;
         if (!video) return;
@@ -449,27 +485,55 @@ export default function ScannerPage({ onBack, onSave }) {
     };
 
     // ---------- save action ----------
-    const handleSave = async () => {
+    const handleSave = async (source = "manual") => {
+        if (saveBusy) return;
+
+        if (!barcode || !expiry) {
+            if (source === "manual") {
+                alert("Scan barcode and expiry date before adding to inventory.");
+            }
+            return;
+        }
+
         const payload = {
             barcode: barcode || null,
             ocrText: ocrText || null,
             expiry: expiry || null,
-            productName: productName || null,
+            productName: productName || `Unknown Item (${barcode})`,
+            productDetails: productDetails || null,
             savedAt: new Date().toISOString(),
         };
 
         try {
+            setSaveBusy(true);
+            setSaveStatus("Adding item to inventory...");
             if (onSave) {
                 await onSave(payload);
+                setSaveStatus("Item added to inventory.");
             } else {
                 console.log("Scan saved (no onSave provided):", payload);
-                alert("Saved locally. Check console.");
+                setSaveStatus("Saved locally.");
             }
         } catch (err) {
             console.error("Save error", err);
-            alert("Save failed. See console.");
+            setSaveStatus("Failed to add item.");
+            if (source === "manual") {
+                alert("Save failed. See console.");
+            }
+            throw err;
+        } finally {
+            setSaveBusy(false);
         }
     };
+
+    useEffect(() => {
+        if (!onSave || !barcode || !expiry || saveBusy) return;
+        const saveKey = `${barcode}:${expiry}`;
+        if (lastAutoSavedKeyRef.current === saveKey) return;
+        lastAutoSavedKeyRef.current = saveKey;
+        handleSave("auto").catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [barcode, expiry, onSave, saveBusy]);
 
     // ---------- UI ----------
     return (
@@ -483,9 +547,9 @@ export default function ScannerPage({ onBack, onSave }) {
                     {/* hidden canvas for manual capture OCR */}
                     <canvas ref={capturedCanvasRef} className="hidden"></canvas>
 
-                    <div className="w-full max-w-7xl grid grid-cols-5 gap-8">
+                    <div className="w-full max-w-7xl grid grid-cols-1 xl:grid-cols-5 gap-8">
                         {/* Left: Camera (bigger) */}
-                        <div className="col-span-3 bg-[#b7dcd3] rounded-3xl p-6 mx-auto w-full shadow-lg relative flex flex-col items-center border border-white/50">
+                        <div className="xl:col-span-3 bg-[#b7dcd3] rounded-3xl p-4 sm:p-6 mx-auto w-full shadow-lg relative flex flex-col items-center border border-white/50">
                             {/* Back */}
                             <button
                                 onClick={onBack}
@@ -495,7 +559,7 @@ export default function ScannerPage({ onBack, onSave }) {
                             </button>
 
                             {/* Camera area */}
-                            <div className="w-full h-[440px] rounded-2xl overflow-hidden relative bg-black border border-white/40 mt-8">
+                            <div className="w-full h-[320px] sm:h-[440px] rounded-2xl overflow-hidden relative bg-black border border-white/40 mt-8">
                                 <video
                                     ref={videoRef}
                                     autoPlay
@@ -527,8 +591,8 @@ export default function ScannerPage({ onBack, onSave }) {
                             <div className="mt-5 w-full bg-white rounded-2xl p-6 shadow flex items-center gap-4 min-h-[90px]">
                                 <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-500">📷</div>
                                 <div>
-                                    <p className="font-medium text-gray-800">Live Scanner</p>
-                                    <p className="text-sm text-gray-400">Point camera at barcode + expiry text</p>
+                                    <p className="font-medium text-gray-800">Scan or enter details</p>
+                                    <p className="text-sm text-gray-400">Use the camera first. If the label is unclear, type the barcode and expiry below.</p>
                                 </div>
                             </div>
 
@@ -540,15 +604,92 @@ export default function ScannerPage({ onBack, onSave }) {
                                 Capture Expiry Text
                             </button>
 
+                            <div className="mt-4 w-full rounded-2xl bg-white/95 p-5 shadow border border-emerald-100">
+                                <div className="flex items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-800">Manual fallback</p>
+                                        <p className="text-xs text-gray-500">Fill these when scanning does not catch the label.</p>
+                                    </div>
+                                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                        Optional
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                            Barcode number
+                                        </label>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={barcode || ""}
+                                            onChange={(e) => applyManualBarcode(e.target.value)}
+                                            placeholder="Enter 8-14 digit barcode"
+                                            className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                            Expiry date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={expiry || ""}
+                                            onChange={(e) => {
+                                                const nextExpiry = e.target.value;
+                                                setExpiry(nextExpiry);
+                                                setOcrText("");
+                                                setSaveStatus("");
+                                                if (barcode && nextExpiry) {
+                                                    lastAutoSavedKeyRef.current = `${barcode}:${nextExpiry}`;
+                                                }
+                                            }}
+                                            className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
 
                         {/* Right: Result panel */}
-                        <div className="col-span-2 bg-white rounded-3xl shadow-lg p-8 flex flex-col">
-                            <div className="bg-[#b7dcd3] rounded-2xl h-56 flex items-center justify-center mb-6">
-                                <div className="text-white opacity-70">Product Image</div>
+                        <div className="xl:col-span-2 bg-white rounded-3xl shadow-lg p-5 sm:p-8 flex flex-col">
+                            <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-5 mb-6">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                                            Product lookup
+                                        </p>
+                                        <h2 className="mt-2 text-2xl font-semibold text-gray-800">
+                                            {productName || "No product detected"}
+                                        </h2>
+                                        <p className="mt-2 text-sm text-gray-500">
+                                            Scan the packet or enter details manually to fetch product, allergen, and additive information.
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-emerald-700 shadow-sm">
+                                        {lookupLoading ? "Checking" : hasProductDetails ? "Found" : "Ready"}
+                                    </div>
+                                </div>
                             </div>
 
-                            <h2 className="text-2xl font-semibold text-gray-800">{productName || "No product detected"}</h2>
+                            <div className="mt-3">
+                                <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                    Product Name
+                                </label>
+                                <input
+                                    type="text"
+                                    className="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800"
+                                    value={productName}
+                                    placeholder="Detected product will appear here"
+                                    readOnly
+                                />
+                                {lookupLoading && <div className="mt-1 text-xs text-gray-500">Looking up barcode...</div>}
+                                {lookupError && <div className="mt-1 text-xs text-amber-600">{lookupError}</div>}
+                                {saveStatus && <div className="mt-1 text-xs text-emerald-700">{saveStatus}</div>}
+                            </div>
 
                             {/* pills */}
                             <div className="flex gap-3 mt-4">
@@ -565,6 +706,62 @@ export default function ScannerPage({ onBack, onSave }) {
                             </div>
 
                             <div className="mt-4 text-sm text-gray-600 leading-relaxed">
+                                {hasProductDetails && (
+                                    <div className="space-y-3 mb-5">
+                                        <div>
+                                            <div className="font-medium text-gray-700 mb-1">Item Details</div>
+                                            <div className="text-xs text-gray-500">
+                                                Brand: {productDetails.brand || "Not listed"}
+                                                {productDetails.quantity ? ` | Quantity: ${productDetails.quantity}` : ""}
+                                            </div>
+                                            <div className="text-xs text-gray-500 break-words">
+                                                Categories: {displayList(productDetails.categories)}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="font-medium text-gray-700 mb-1">Ingredients</div>
+                                            <div className="text-xs text-gray-500 break-words">
+                                                {productDetails.ingredients || "Not listed"}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <div className="rounded-xl bg-amber-50 border border-amber-100 p-3">
+                                                <div className="font-medium text-amber-800 mb-1">Possible Allergens</div>
+                                                <div className="text-xs text-amber-700 break-words">
+                                                    {displayList(productDetails.allergens)}
+                                                </div>
+                                                <div className="text-xs text-amber-700 break-words mt-1">
+                                                    Traces: {displayList(productDetails.traces)}
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-xl bg-red-50 border border-red-100 p-3">
+                                                <div className="font-medium text-red-800 mb-1">Additives / Chemicals</div>
+                                                <div className="text-xs text-red-700 break-words">
+                                                    {displayList(productDetails.possibleChemicals || productDetails.additives)}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                            <div className="rounded-lg bg-gray-50 border border-gray-100 p-2">
+                                                Nutri grade: {productDetails.nutritionGrade || "N/A"}
+                                            </div>
+                                            <div className="rounded-lg bg-gray-50 border border-gray-100 p-2">
+                                                NOVA: {productDetails.novaGroup || "N/A"}
+                                            </div>
+                                            <div className="rounded-lg bg-gray-50 border border-gray-100 p-2">
+                                                Sugar: {productDetails.nutriments?.sugars ?? "N/A"}g/100g
+                                            </div>
+                                            <div className="rounded-lg bg-gray-50 border border-gray-100 p-2">
+                                                Salt: {productDetails.nutriments?.salt ?? "N/A"}g/100g
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {ocrText ? (
                                     <>
                                         <div className="font-medium text-gray-700 mb-1">Extracted Text</div>
@@ -576,18 +773,16 @@ export default function ScannerPage({ onBack, onSave }) {
                             </div>
 
                             <div className="mt-auto flex gap-4 pt-6">
-                                <button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 transition">
-                                    Add to Inventory
+                                <button
+                                    onClick={() => handleSave("manual")}
+                                    disabled={!barcode || !expiry || saveBusy}
+                                    className="flex-1 bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {saveBusy ? "Adding..." : "Add to Inventory"}
                                 </button>
 
                                 <button
-                                    onClick={() => {
-                                        setBarcode(null);
-                                        setOcrText("");
-                                        setExpiry("");
-                                        setProductName("");
-                                        setAutoStopped(false);
-                                    }}
+                                    onClick={resetScanDetails}
                                     className="bg-gray-200 text-gray-700 py-3 px-6 rounded-xl hover:bg-gray-300 transition"
                                 >
                                     Reset
@@ -602,3 +797,4 @@ export default function ScannerPage({ onBack, onSave }) {
         </div>
     );
 }
+

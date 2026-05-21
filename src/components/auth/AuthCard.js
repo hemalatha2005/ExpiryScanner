@@ -22,7 +22,6 @@ export default function AuthCard({
   const handleSubmit = () => {
     if (!isFormValid) return;
 
-    // ✅ BUILD USER OBJECT (SINGLE SOURCE OF TRUTH)
     const fullName = isSignup
       ? `${firstName.trim()} ${lastName.trim()}`
       : email.split("@")[0];
@@ -32,12 +31,10 @@ export default function AuthCard({
       email: email.trim(),
     };
 
-    // ✅ PERSIST DATA
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("isAuthenticated", "true");
     localStorage.setItem("token", "demo-token"); // placeholder for backend JWT
 
-    // ✅ UPDATE REACT STATE (INSTANT UI UPDATE)
     onAuthSuccess(user);
   };
 

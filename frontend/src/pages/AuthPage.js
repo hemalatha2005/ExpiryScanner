@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Lottie from "lottie-react";
 import AuthCard from "../components/auth/AuthCard";
 
-// ✅ IMPORT YOUR JSON FILE
 import authBgAnimation from "../assets/Gradient Header.json";
 
 export default function AuthPage({ onAuthSuccess }) {

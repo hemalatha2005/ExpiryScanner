@@ -6,8 +6,7 @@ const authRoutes = require("./routes/auth.routes");
 const protectedRoutes = require("./routes/protected.routes");
 const itemRoutes = require("./routes/items.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
-
-
+const barcodeRoutes = require("./routes/barcode.routes");
 
 const app = express();
 
@@ -19,7 +18,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
-
+app.use("/api/barcode", barcodeRoutes);
 
 module.exports = app;
+

@@ -98,6 +98,13 @@ export default function ItemsPage() {
 
   const handleRemoveItem = async (id) => {
     if (!id || removeLoadingId) return;
+
+    const itemToRemove = items.find((item) => item._id === id);
+    const confirmed = window.confirm(
+      `Remove ${itemToRemove?.name || "this item"} from your inventory?`
+    );
+    if (!confirmed) return;
+
     setRemoveLoadingId(id);
     setError("");
 
