@@ -132,7 +132,7 @@ export default function ScannerPage({ onBack, onSave }) {
             .trim();
 
         // Match ALL dates in the text (dd/mm/yy, dd/mm/yyyy, dd-mm-yy, dd.mm.yy)
-        const regex = /\b(0?[1-9]|[12][0-9]|3[01])[\/\-.](0?[1-9]|1[0-2])[\/\-.](\d{2,4})\b/g;
+        const regex = /\b(0?[1-9]|[12][0-9]|3[01])[/\-.](0?[1-9]|1[0-2])[/\-.](\d{2,4})\b/g;
         const matches = [...s.matchAll(regex)];
 
         if (matches.length === 0) return null;
