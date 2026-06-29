@@ -139,7 +139,7 @@ export default function ScannerPage({ onBack, onSave }) {
 
         // Convert matches → proper YYYY-MM-DD values
         const parsedDates = matches.map(m => {
-            let [day, month, year] = m[0].split(/\/|-|\./);
+            let [day, month, year] = m[0].split(/[/-]/);
 
             // convert yy → yyyy
             if (year.length === 2) {
