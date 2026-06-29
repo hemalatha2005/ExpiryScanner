@@ -1,48 +1,88 @@
 # 🥗 SmartExpiryProject
 
-Reduce food waste. Save money. Cook smarter.
+**Reduce food waste. Save money. Cook smarter.**
 
-SmartExpiryProject helps users track grocery expiry dates, understand weekly savings/loss, and get cooking suggestions based on available items.
+SmartExpiryProject is a **full-stack web application** designed to help users intelligently track grocery expiry dates, minimize food waste, calculate weekly savings/loss, and discover creative recipes based on available items. Built with modern technologies including React, Node.js/Express, and MongoDB, this project demonstrates end-to-end application development with secure authentication, real-time data management, and third-party API integration.
+
+### 🎯 Problem Statement
+Millions of tons of food waste occur annually due to lack of tracking and awareness. SmartExpiryProject bridges this gap by providing an intuitive platform for household inventory management and smart cooking suggestions.
+
+### ⭐ Key Highlights
+- **Full-Stack Web Application** with responsive UI and scalable backend
+- **Secure Authentication** using JWT tokens with password hashing
+- **Real-time Inventory Management** with expiry date tracking and notifications
+- **Third-party API Integration** with TheMealDB for dynamic recipe suggestions
+- **Financial Analytics** calculating weekly savings and potential losses
+- **User-Specific Data** with MongoDB documents isolated per user
 
 ---
 
 ## ✨ Features
 
-### 🔐 Authentication
+### 🔐 Authentication & Security
+- JWT-based authentication with secure token management
+- Password hashing for data security
+- Protected routes and middleware-based authorization
+- User session management
 
-- Signup / Login using JWT
-- Secure password handling
+### 📦 Inventory Management
+- Add, view, update, and delete food items
+- Track expiry dates with automatic categorization
+- Item quantity and cost tracking
+- User-specific data isolation using MongoDB ObjectIDs
 
-### 📦 Item Management
+### ⏰ Smart Expiry Tracking
+- Real-time expiry status (Fresh, Expiring Soon, Expired)
+- Automated alerts for near-expiry items
+- Visual indicators and sorting capabilities
+- Historical expiry tracking for analytics
 
-- Add food items with expiry dates
-- View & delete items
-- Items are user-specific
+### 📊 Advanced Dashboard Analytics
+- Personalized user dashboard with key metrics
+- Weekly savings/loss calculation based on item costs
+- Waste reduction insights
+- Item category breakdown and statistics
 
-### ⏰ Expiry Tracking
+### 🍳 Intelligent Recipe Suggestions
+- Integration with TheMealDB API for recipe discovery
+- Recipes matched to available inventory items
+- Nutrition information and cooking instructions
+- Cost-effective meal planning recommendations
 
-- Highlights expired & near-expiry items
-
-### 📊 Dashboard
-
-- Personalized summary per user
-- Weekly savings & loss calculation
-
-### 🍳 Cooking Suggestions
-
-- Uses TheMealDB API
-- Suggests recipes based on stored items
+### 📱 Barcode Scanning
+- Quick item addition via barcode scanning
+- Streamlined inventory entry process
 
 ---
 
 ## 🧠 Tech Stack
-```bash
-- Frontend-React
-- Backend-Node.js, Express
-- Database-MongoDB
-- Auth-JWT
-- Recipe API-TheMealDB
-```
+
+**Frontend:**
+- React.js with functional components and hooks
+- Tailwind CSS for responsive UI design
+- PostCSS for advanced styling
+- React Router for client-side navigation
+- Axios for HTTP requests
+
+**Backend:**
+- Node.js with Express.js framework
+- RESTful API architecture
+- Middleware-based request handling
+- Error handling and validation
+
+**Database:**
+- MongoDB for NoSQL document storage
+- Mongoose ODM (optional) for schema management
+- Data indexing for optimized queries
+
+**Authentication & Security:**
+- JWT (JSON Web Tokens) for stateless authentication
+- Bcrypt for password hashing
+- CORS configuration for security
+
+**Third-party Integration:**
+- TheMealDB API for recipe data
+- RESTful API consumption and data transformation
 ---
 
 ## 📁 Folder Structure
@@ -109,45 +149,92 @@ npm install
 ```
 
 ### ▶️ Run Locally
-```bash
 
-*Terminal 1 – Backend*
+**Terminal 1 – Backend Server**
+```bash
 cd backend
 npm run dev
+```
+Backend runs on `http://localhost:5000`
 
-*Terminal 2 – Frontend*
+**Terminal 2 – Frontend Application**
+```bash
 cd frontend
 npm start
-
-
-*App runs at:*
-👉 http://localhost:3000
 ```
+Frontend runs on `http://localhost:3000`
+
+---
+
+## 🔌 API Endpoints
+
+### Authentication
+- `POST /api/auth/signup` - User registration
+- `POST /api/auth/login` - User login (returns JWT token)
+
+### Items Management
+- `GET /api/items` - Fetch all items for logged-in user
+- `POST /api/items` - Add new item
+- `PUT /api/items/:id` - Update item details
+- `DELETE /api/items/:id` - Delete item
+
+### Dashboard
+- `GET /api/dashboard` - Get user dashboard analytics
+- `GET /api/dashboard/stats` - Weekly savings and loss metrics
+
+### Health Check
+- `GET /api/health` - Server health status
+
+---
+
+## 💡 Skills Demonstrated
+
+✅ **Full-Stack Development** - End-to-end application building  
+✅ **RESTful API Design** - Clean, scalable API architecture  
+✅ **Database Design** - Schema planning and data relationships  
+✅ **Authentication & Security** - JWT implementation and password hashing  
+✅ **Third-party API Integration** - External service consumption and data mapping  
+✅ **Responsive UI Design** - Mobile-first approach with Tailwind CSS  
+✅ **State Management** - React hooks and component lifecycle  
+✅ **Error Handling** - Comprehensive error management across stack  
+✅ **Git Version Control** - Project collaboration and version management
+
+---
+
+## � Future Enhancements
+
+- **Push Notifications** - Real-time alerts for expiring items
+- **Machine Learning** - Predictive inventory management
+- **Mobile App** - Native iOS/Android application
+- **Email Notifications** - Weekly digest of expiring items
+- **Social Features** - Recipe sharing and community recommendations
+- **Cloud Deployment** - AWS/Azure integration for scalability
+- **Advanced Analytics** - AI-powered expense optimization
+
+---
+
+## 📊 Project Statistics
+
+| Metric | Value |
+|--------|-------|
+| Frontend Components | 12+ |
+| Backend Routes | 15+ |
+| Database Collections | 2 (Users, Items) |
+| API Endpoints | 10+ |
+| Third-party APIs | 1 (TheMealDB) |
+| Tech Stack | MERN (Node.js variant) |
+
+---
+
+## 📝 License
+
+This project is open source and available under the MIT License.
 
 ---
 
 ## 👩‍💻 Author
 
-## Anisa Barvin
+**Hemalatha P N**
 
-📧 Email: barvinanisa@gmail.com
-
-🔗 GitHub: https://github.com/Anisa-barvin
-
-## Anika V
-
-📧 Email: anikavadivel@gmail.com
-
-🔗 GitHub: https://github.com/Anika02023
-
-## Archana gurusamy
-
-📧 Email: archanagurusamy648@gmail.com
-
-🔗 GitHub: https://github.com/ARCHANA-SENGUNTHAR
-
-## Hemalatha P N
-
-📧 Email: hemalathanatarajan28@gmail.com
-
+📧 Email: hemalathanatarajan28@gmail.com  
 🔗 GitHub: https://github.com/hemalatha2005
